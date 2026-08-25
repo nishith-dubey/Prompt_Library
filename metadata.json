@@ -1,0 +1,6 @@
+{
+  "name": "Prompt Library",
+  "description": "A community prompt library and organizer to create, discover, search, rate AI prompts with media attachments, prototype demos, collections, and AI validation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

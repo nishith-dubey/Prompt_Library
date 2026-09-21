@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import api from '../services/api';
+import api, { uploadMediaFile } from '../services/api';
 import { CATEGORIES, MediaItem, AIValidationResult, Prompt } from '../types';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
@@ -111,29 +111,30 @@ export const EditPromptPage: React.FC = () => {
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    Array.from(files).forEach((file: File) => {
+    Array.from(files).forEach(async (file: File) => {
       if (file.size > 15 * 1024 * 1024) {
         error(`File ${file.name} exceeds 15MB limit.`);
         return;
       }
 
-      const reader = new FileReader();
-      reader.onload = () => {
-        const isVideo = file.type.startsWith('video/');
+      if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+        error(`File ${file.name} is not a supported image or video.`);
+        return;
+      }
+      try {
+        const uploaded = await uploadMediaFile(file);
         setMediaList((prev) => [
           ...prev,
-          {
-            type: isVideo ? 'video' : 'image',
-            url: reader.result as string
-          }
+          uploaded
         ]);
         success(`Uploaded ${file.name}`);
-      };
-      reader.readAsDataURL(file);
+      } catch (err: any) {
+        error(err.response?.data?.message || `Failed to upload ${file.name}.`);
+      }
     });
 
     e.target.value = '';
@@ -155,7 +156,8 @@ export const EditPromptPage: React.FC = () => {
       const res = await api.post('/prompts/validate', {
         title: formData.title,
         promptText: formData.promptText,
-        category: formData.category
+        category: formData.category,
+        media: mediaList
       });
 
       if (res.data.success) {

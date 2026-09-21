@@ -55,6 +55,9 @@ export async function getUserPromptRating(req: AuthRequest, res: Response) {
     }
 
     const { id } = req.params;
+    if (!db.findPromptById(id)) {
+      return res.status(404).json({ success: false, message: 'Prompt not found.' });
+    }
     const ratingDoc = db.findRating(id, req.user._id);
 
     return res.json({

@@ -31,8 +31,8 @@ function populatePrompt(prompt: PromptDoc, currentUserId?: string) {
 
 export async function validatePromptPreview(req: Request, res: Response) {
   try {
-    const { title, promptText, category } = req.body;
-    if (!title || !promptText) {
+    const { title, promptText, category, media } = req.body;
+    if (typeof title !== 'string' || typeof promptText !== 'string' || !title.trim() || !promptText.trim()) {
       return res.status(400).json({
         success: false,
         message: 'Title and prompt text are required for validation.'
@@ -42,7 +42,8 @@ export async function validatePromptPreview(req: Request, res: Response) {
     const aiCheck = await validatePromptWithAI(
       String(title),
       String(promptText),
-      String(category || 'General')
+      String(category || 'General'),
+      Array.isArray(media) ? media : undefined
     );
 
     return res.json({
@@ -81,7 +82,8 @@ export async function createPrompt(req: AuthRequest, res: Response) {
     const aiValidation = await validatePromptWithAI(
       validatedData.title,
       validatedData.promptText,
-      validatedData.category
+      validatedData.category,
+      validatedData.media
     );
 
     if (!aiValidation.allowed) {
@@ -258,11 +260,12 @@ export async function updatePrompt(req: AuthRequest, res: Response) {
     const validatedData = parseResult.data;
 
     // AI validation if prompt text changed
-    if (validatedData.promptText !== existing.promptText || validatedData.title !== existing.title) {
+    if (validatedData.promptText !== existing.promptText || validatedData.title !== existing.title || validatedData.category !== existing.category || JSON.stringify(validatedData.media) !== JSON.stringify(existing.media)) {
       const aiValidation = await validatePromptWithAI(
         validatedData.title,
         validatedData.promptText,
-        validatedData.category
+        validatedData.category,
+        validatedData.media
       );
       if (!aiValidation.allowed) {
         return res.status(400).json({

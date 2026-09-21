@@ -17,6 +17,21 @@ export const registerSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters').max(100, 'Password is too long'),
   role: z.string().trim().min(2, 'Role must be specified').max(60, 'Role must be under 60 characters'),
   bio: z.string().trim().max(500, 'Bio must be under 500 characters').optional(),
+  profileImage: z.string().trim().refine((value) => {
+    if (!value || value.startsWith('data:image/')) return true;
+    try {
+      const protocol = new URL(value).protocol;
+      return protocol === 'http:' || protocol === 'https:';
+    } catch {
+      return false;
+    }
+  }, 'Profile image must be a valid HTTP, HTTPS, or image data URL').optional().or(z.literal(''))
+});
+
+export const profileSchema = z.object({
+  name: z.string().trim().min(2, 'Name must be at least 2 characters').max(60, 'Name must be under 60 characters'),
+  role: z.string().trim().min(2, 'Role must be specified').max(60, 'Role must be under 60 characters'),
+  bio: z.string().trim().max(500, 'Bio must be under 500 characters').optional().default(''),
   profileImage: z.string().trim().url('Profile image must be a valid URL').optional().or(z.literal(''))
 });
 
@@ -27,7 +42,14 @@ export const loginSchema = z.object({
 
 export const mediaItemSchema = z.object({
   type: z.enum(['image', 'video']),
-  url: z.string().trim().min(1, 'Media URL is required'),
+  url: z.string().trim().min(1, 'Media URL is required').refine((url) => {
+    try {
+      const protocol = new URL(url).protocol;
+      return protocol === 'http:' || protocol === 'https:' || url.startsWith('data:image/') || url.startsWith('data:video/');
+    } catch {
+      return url.startsWith('data:image/') || url.startsWith('data:video/');
+    }
+  }, 'Media must use an HTTP, HTTPS, or validated data URL'),
   publicId: z.string().optional()
 });
 

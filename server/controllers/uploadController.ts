@@ -9,17 +9,28 @@ export async function uploadMedia(req: AuthRequest, res: Response) {
 
     const { dataUrl, fileName, fileType, mediaType } = req.body;
 
-    if (!dataUrl || typeof dataUrl !== 'string') {
+    if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:')) {
       return res.status(400).json({
         success: false,
         message: 'Valid media data or URL is required.'
       });
     }
 
-    // Determine type (image or video)
-    let type: 'image' | 'video' = 'image';
-    if (mediaType === 'video' || (fileType && fileType.startsWith('video/')) || dataUrl.startsWith('data:video/')) {
-      type = 'video';
+    const match = dataUrl.match(/^data:(image|video)\/([a-z0-9.+-]+);base64,([\s\S]+)$/i);
+    if (!match) {
+      return res.status(400).json({ success: false, message: 'Media must be a base64 image or video data URL.' });
+    }
+
+    const [, dataType, subtype, encoded] = match;
+    const type: 'image' | 'video' = dataType === 'video' ? 'video' : 'image';
+    const declaredType = fileType || `${dataType}/${subtype}`;
+    if (mediaType !== type || !declaredType.startsWith(`${type}/`)) {
+      return res.status(400).json({ success: false, message: 'Media type does not match the uploaded file.' });
+    }
+
+    const decodedBytes = Math.floor((encoded.length * 3) / 4) - (encoded.endsWith('==') ? 2 : encoded.endsWith('=') ? 1 : 0);
+    if (decodedBytes <= 0 || decodedBytes > 15 * 1024 * 1024) {
+      return res.status(413).json({ success: false, message: 'Media file must be smaller than 15MB.' });
     }
 
     // If Cloudinary credentials exist in environment, we could upload to Cloudinary.

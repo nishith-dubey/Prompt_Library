@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import api from '../services/api';
+import api, { uploadMediaFile } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { ROLES } from '../types';
@@ -16,6 +16,27 @@ export const ProfilePage: React.FC = () => {
   const [bio, setBio] = useState(user?.bio || '');
   const [profileImage, setProfileImage] = useState(user?.profileImage || '');
   const [saving, setSaving] = useState(false);
+
+  const handleProfileImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      error('Profile image must be an image file.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      error('Profile image must be smaller than 5MB.');
+      return;
+    }
+    try {
+      const uploaded = await uploadMediaFile(file);
+      setProfileImage(uploaded.url);
+      success('Profile image uploaded. Save your profile to apply it.');
+    } catch (err: any) {
+      error(err.response?.data?.message || 'Failed to upload profile image.');
+    }
+  };
 
   const handleGenerateRandomAvatar = () => {
     const randomSeed = Math.random().toString(36).substring(2, 8);
@@ -86,12 +107,24 @@ export const ProfilePage: React.FC = () => {
                 Randomize Avatar
               </button>
               <p className="text-[11px] text-gray-400">
-                Or paste a custom image URL below
+                Upload an image or paste a custom image URL below
               </p>
             </div>
           </div>
 
           <form onSubmit={handleSubmit} className="pt-6 space-y-4">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                Upload Profile Image
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleProfileImageUpload}
+                className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-sm"
+              />
+            </div>
+
             <div className="space-y-1.5">
               <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider">
                 Full Name <span className="text-rose-500">*</span>

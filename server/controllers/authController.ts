@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { db } from '../db';
 import { generateToken, AuthRequest } from '../middleware/auth';
-import { registerSchema, loginSchema } from '../validators';
+import { registerSchema, loginSchema, profileSchema } from '../validators';
 
 export async function register(req: Request, res: Response) {
   try {
@@ -135,12 +135,13 @@ export async function updateProfile(req: AuthRequest, res: Response) {
       return res.status(401).json({ success: false, message: 'Not authenticated' });
     }
 
-    const { name, role, bio, profileImage } = req.body;
-    const updates: any = {};
-    if (typeof name === 'string' && name.trim().length >= 2) updates.name = name.trim();
-    if (typeof role === 'string' && role.trim().length >= 2) updates.role = role.trim();
-    if (typeof bio === 'string') updates.bio = bio.trim();
-    if (typeof profileImage === 'string') updates.profileImage = profileImage.trim();
+    const parseResult = profileSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return res.status(400).json({ success: false, message: parseResult.error.issues[0]?.message || 'Invalid profile data.' });
+    }
+
+    const { name, role, bio, profileImage } = parseResult.data;
+    const updates = { name, role, bio, profileImage };
 
     const updated = db.updateUser(req.user._id, updates);
     if (!updated) {

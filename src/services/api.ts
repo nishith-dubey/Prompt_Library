@@ -7,6 +7,23 @@ const api = axios.create({
   },
 });
 
+export async function uploadMediaFile(file: File) {
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error('Could not read the selected file.'));
+    reader.readAsDataURL(file);
+  });
+
+  const response = await api.post('/upload', {
+    dataUrl,
+    fileName: file.name,
+    fileType: file.type,
+    mediaType: file.type.startsWith('video/') ? 'video' : 'image'
+  });
+  return response.data.data;
+}
+
 // Request interceptor to attach JWT token
 api.interceptors.request.use(
   (config) => {

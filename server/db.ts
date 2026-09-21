@@ -61,8 +61,8 @@ interface DatabaseData {
   ratings: RatingDoc[];
 }
 
-const DATA_DIR = path.join(process.cwd(), '.data');
-const DATA_FILE = path.join(DATA_DIR, 'db.json');
+const DATA_FILE = process.env.PROMPT_LIBRARY_DB_FILE || path.join(process.cwd(), '.data', 'db.json');
+const DATA_DIR = path.dirname(DATA_FILE);
 
 const INITIAL_SEED: DatabaseData = {
   users: [

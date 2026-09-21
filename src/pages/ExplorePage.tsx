@@ -125,7 +125,7 @@ export const ExplorePage: React.FC = () => {
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
+            {/* <div className="flex items-center gap-3">
               {user ? (
                 <Link
                   to="/create"
@@ -142,7 +142,7 @@ export const ExplorePage: React.FC = () => {
                   Join to Share & Rate
                 </Link>
               )}
-            </div>
+            </div> */}
           </div>
 
           {/* Search Bar */}

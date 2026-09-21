@@ -142,7 +142,7 @@ export const Navbar: React.FC = () => {
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm transition-all shadow-xs active:scale-[0.98]"
                 >
                   <PlusCircle className="w-4 h-4" />
-                  Create Prompt
+                  Add Prompt
                 </Link>
 
                 {/* User Dropdown */}
